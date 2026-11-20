@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Meta Talk — Spy Party Game</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono for Timer -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            meta: {
+              bg: '#FAF9F5',
+              blue: '#16488D',
+              blueDark: '#0F3366',
+              blueLight: '#E8EFF8',
+              blueTint: '#F2F6FC',
+              accent: '#2B6CB0',
+              spy: '#B91C1C',
+              spyBg: '#FEF2F2',
+            }
+          },
+          boxShadow: {
+            'meta': '0 4px 0 0 #16488D',
+            'meta-sm': '0 2px 0 0 #16488D',
+            'meta-lg': '0 6px 0 0 #16488D',
+            'card': '0 10px 25px -5px rgba(22, 72, 141, 0.12), 0 4px 10px -3px rgba(22, 72, 141, 0.06)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #FAF9F5;
+      color: #16488D;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+    }
+
+    /* Tactile Neo-Brutalist / Clean Academic Card Button Press */
+    .btn-meta {
+      transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.12s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.15s ease;
+    }
+    .btn-meta:active:not(:disabled) {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 0 #16488D;
+    }
+
+    /* 3D Card Flip Animation for Role Reveal */
+    .perspective-1000 {
+      perspective: 1000px;
+    }
+    .transform-style-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .backface-hidden {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+    .rotate-y-180 {
+      transform: rotateY(180deg);
+    }
+
+    /* Subtle pulse for < 30s urgent timer */
+    @keyframes urgentPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(185, 28, 28, 0.4);
+      }
+      50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 12px rgba(185, 28, 28, 0);
+      }
+    }
+    .urgent-pulse {
+      animation: urgentPulse 1s infinite ease-in-out;
+    }
+
+    /* Gentle floating animation for logo */
+    @keyframes gentleFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-2px); }
+    }
+    .logo-float {
+      animation: gentleFloat 3.5s ease-in-out infinite;
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #FAF9F5;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center selection:bg-meta-blue selection:text-white">
+
+  <!-- Main App Container (Mobile-First Max Width) -->
+  <div class="w-full max-w-md min-h-screen flex flex-col px-4 py-4 sm:py-6">
+
+    <!-- HEADER: Custom Meta Talk Logo + Rules Button -->
+    <header class="flex items-center justify-between bg-white border-2 border-meta-blue rounded-2xl px-4 py-3 shadow-meta-sm mb-5">
+      <div class="flex items-center gap-3">
+        <!-- Custom SVG Recreation of Meta Talk Speech Bubble Bird Logo -->
+        <div class="w-11 h-11 flex-shrink-0 logo-float">
+          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+            <!-- Back Speech Bubble (Bottom-Left) -->
+            <path d="M46 43C29.4315 43 16 56.4315 16 73C16 79.485 18.0574 85.4903 21.5546 90.3987L17.5 103.5L31.4256 99.1482C35.8091 101.601 40.7429 103 46 103C58.972 103 70.0085 94.7647 74.1872 83.2266" 
+                  fill="#FAF9F5" stroke="#16488D" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Three Small Dots Inside Back Bubble -->
+            <circle cx="37" cy="88" r="3" fill="#16488D"/>
+            <circle cx="46" cy="90.5" r="3" fill="#16488D"/>
+            <circle cx="55" cy="88" r="3" fill="#16488D"/>
+
+            <!-- Front Speech Bubble (Top-Right Bird Character) -->
+            <path d="M68 24C48.1177 24 32 40.1177 32 60C32 79.8823 48.1177 96 68 96C87.8823 96 104 79.8823 104 60C104 56.6095 103.531 53.3287 102.654 50.2191L113 43.5L100.32 42.9482C94.2886 31.6621 82.0672 24 68 24Z" 
+                  fill="#FFFFFF" stroke="#16488D" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- Cheerful Arched Eye '^' -->
+            <path d="M76 44.5C78.5 40 83.5 40 86 44.5" stroke="#16488D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-lg font-extrabold tracking-tight text-meta-blue leading-none">META TALK</h1>
+            <span class="text-[10px] font-bold uppercase tracking-wider bg-meta-blue text-white px-1.5 py-0.5 rounded-md">SPY</span>
+          </div>
+          <p id="header-subtitle" class="text-xs font-medium text-meta-blue/75 mt-0.5">Club Event Pass & Play</p>
+        </div>
+      </div>
+
+      <button onclick="toggleRulesModal(true)" aria-label="How to Play" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-meta-blueTint hover:bg-meta-blueLight text-meta-blue font-bold text-xs border border-meta-blue/30 transition active:scale-95">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Rules</span>
+      </button>
+    </header>
+
+    <!-- INLINE NOTIFICATION BANNER (Replaces alert/confirm) -->
+    <div id="toast-banner" class="hidden mb-4 px-4 py-3 rounded-xl border-2 border-meta-blue bg-white shadow-meta-sm flex items-center justify-between gap-3 transition-all">
+      <div class="flex items-center gap-2.5">
+        <span id="toast-icon" class="text-base">ℹ️</span>
+        <p id="toast-message" class="text-xs font-bold text-meta-blue"></p>
+      </div>
+      <button onclick="hideToast()" class="text-meta-blue/60 hover:text-meta-blue font-bold text-sm px-1">✕</button>
+    </div>
+
+    <!-- =====================================================================
+         SCREEN 1: TABLE MODERATOR SETUP
+         ===================================================================== -->
+    <main id="screen-setup" class="flex-1 flex flex-col gap-4">
+      
+      <!-- Table Identifier & Round Counter Card -->
+      <section class="bg-white border-2 border-meta-blue rounded-2xl p-4 shadow-card">
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex-1">
+            <label for="table-name-input" class="block text-[11px] font-extrabold uppercase tracking-wider text-meta-blue/70 mb-1">
+              Table Name / Group
+            </label>
+            <input id="table-name-input" type="text" maxlength="24" placeholder="e.g., Table 1" 
+                   class="w-full px-3.5 py-2 rounded-xl bg-meta-bg border-2 border-meta-blue/30 focus:border-meta-blue focus:bg-white outline-none font-bold text-sm text-meta-blue transition" />
+          </div>
+          <div class="text-right">
+            <span class="block text-[11px] font-extrabold uppercase tracking-wider text-meta-blue/70 mb-1">Round</span>
+            <div class="inline-flex items-center justify-center px-3.5 py-2 rounded-xl bg-meta-blueLight border-2 border-meta-blue font-extrabold text-sm text-meta-blue">
+              #<span id="round-counter-badge">1</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Players Roster Card (4 to 6 Players) -->
+      <section class="bg-white border-2 border-meta-blue rounded-2xl p-4 shadow-card">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-base font-extrabold text-meta-blue">Table Players</h2>
+            <p class="text-xs text-meta-blue/70 font-medium">4–6 players • 1 Spy per round</p>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span id="player-count-pill" class="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-meta-blue text-white">
+              4 / 6
+            </span>
+          </div>
+        </div>
+
+        <!-- Dynamic Player Inputs List -->
+        <div id="players-list" class="flex flex-col gap-2.5 mb-3">
+          <!-- Populated via JS -->
+        </div>
+
+        <!-- Add Player & Reset Spy History Controls -->
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-meta-blue/15">
+          <button id="btn-add-player" onclick="addPlayer()" type="button"
+                  class="flex-1 py-2.5 px-3 rounded-xl bg-meta-blueTint hover:bg-meta-blueLight border-2 border-dashed border-meta-blue text-meta-blue font-bold text-xs flex items-center justify-center gap-1.5 transition active:scale-98 disabled:opacity-40 disabled:pointer-events-none">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+            </svg>
+            <span>Add Player</span>
+          </button>
+
+          <button id="btn-reset-history" onclick="confirmResetHistory()" type="button"
+                  class="py-2.5 px-3 rounded-xl bg-white hover:bg-red-50 border border-meta-blue/25 text-meta-blue/75 hover:text-meta-spy hover:border-meta-spy/40 font-semibold text-xs transition"
+                  title="Reset spy fairness counter if new players join">
+            Reset History
+          </button>
+        </div>
+
+        <!-- Inline Confirm Reset Bar (Hidden by default) -->
+        <div id="reset-confirm-bar" class="hidden mt-3 p-3 rounded-xl bg-red-50 border border-red-200 flex items-center justify-between gap-2">
+          <span class="text-xs font-bold text-red-800">Clear Spy turn counts?</span>
+          <div class="flex items-center gap-1.5">
+            <button onclick="executeResetHistory()" class="px-2.5 py-1 rounded-lg bg-red-700 text-white text-xs font-bold">Yes, Reset</button>
+            <button onclick="cancelResetHistory()" class="px-2.5 py-1 rounded-lg bg-white border border-red-200 text-red-800 text-xs font-bold">Cancel</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Category Selection Card -->
+      <section class="bg-white border-2 border-meta-blue rounded-2xl p-4 shadow-card">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-base font-extrabold text-meta-blue">Topic Category</h2>
+            <p class="text-xs text-meta-blue/70 font-medium">Spy sees the category, not the secret word</p>
+          </div>
+        </div>
+
+        <div id="category-grid" class="grid grid-cols-2 gap-2">
+          <!-- Populated via JS -->
+        </div>
+      </section>
+
+      <!-- Start Game CTA -->
+      <div class="mt-auto pt-2 pb-4">
+        <button onclick="startRound()" class="btn-meta w-full py-4 px-6 rounded-2xl bg-meta-blue hover:bg-meta-blueDark text-white font-extrabold text-base tracking-wide border-2 border-meta-blue shadow-meta flex items-center justify-center gap-2.5">
+          <span>Start Role Assignment</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+          </svg>
+        </button>
+      </div>
+    </main>
+
+    <!-- =====================================================================
+         SCREEN 2: PRIVATE PASS-AND-PLAY ROLE REVEAL
+         ===================================================================== -->
+    <main id="screen-reveal" class="hidden flex-1 flex flex-col justify-between gap-4">
+      
+      <!-- Progress Bar & Player Indicator -->
+      <div class="bg-white border-2 border-meta-blue rounded-2xl p-3.5 shadow-meta-sm">
+        <div class="flex items-center justify-between text-xs font-extrabold text-meta-blue mb-2">
+          <span id="reveal-table-badge" class="uppercase tracking-wider text-meta-blue/70">TABLE 1</span>
+          <span id="reveal-progress-text">Player 1 of 4</span>
+        </div>
+        <div class="w-full h-2.5 bg-meta-blueLight rounded-full overflow-hidden border border-meta-blue/20">
+          <div id="reveal-progress-bar" class="h-full bg-meta-blue rounded-full transition-all duration-300" style="width: 25%"></div>
+        </div>
+      </div>
+
+      <!-- Interactive Flip Card Container -->
+      <div class="flex-1 flex flex-col items-center justify-center my-1">
+        <div class="w-full perspective-1000">
+          <div id="role-card-inner" class="relative w-full min-h-[360px] transform-style-3d">
+            
+            <!-- FRONT OF CARD: Privacy Shield ("Pass the phone to...") -->
+            <div id="card-front" class="backface-hidden w-full min-h-[360px] bg-white border-2 border-meta-blue rounded-3xl p-6 shadow-card flex flex-col items-center justify-between text-center">
+              <div class="w-full flex justify-center">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-meta-blueTint border border-meta-blue/30 text-xs font-extrabold text-meta-blue">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  </svg>
+                  PRIVATE SCREEN
+                </span>
+              </div>
+
+              <div class="my-4">
+                <p class="text-sm font-bold uppercase tracking-wider text-meta-blue/70 mb-1">Pass the phone to</p>
+                <h2 id="reveal-player-name" class="text-3xl sm:text-4xl font-extrabold text-meta-blue break-words leading-tight">
+                  Player 1
+                </h2>
+                <p class="text-xs font-medium text-meta-blue/70 mt-3 max-w-[260px] mx-auto leading-relaxed">
+                  Make sure no one else at the table can see your screen before revealing your role.
+                </p>
+              </div>
+
+              <button onclick="revealCurrentRole()" class="btn-meta w-full py-4 px-5 rounded-2xl bg-meta-blue hover:bg-meta-blueDark text-white font-extrabold text-base border-2 border-meta-blue shadow-meta flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+                <span>Tap to Reveal My Role</span>
+              </button>
+            </div>
+
+            <!-- BACK OF CARD: Secret Role & Word (or Spy Alert) -->
+            <div id="card-back" class="backface-hidden rotate-y-180 absolute inset-0 w-full min-h-[360px] bg-white border-2 border-meta-blue rounded-3xl p-6 shadow-card flex flex-col items-center justify-between text-center">
+              
+              <!-- Role Header Badge -->
+              <div id="role-badge-container" class="w-full flex justify-center">
+                <!-- Filled dynamically -->
+              </div>
+
+              <!-- Role Core Content -->
+              <div id="role-content-container" class="my-3 w-full flex flex-col items-center">
+                <!-- Filled dynamically -->
+              </div>
+
+              <!-- Hide & Pass Button -->
+              <button id="btn-next-player" onclick="hideAndAdvance()" class="btn-meta w-full py-4 px-5 rounded-2xl bg-meta-blue hover:bg-meta-blueDark text-white font-extrabold text-base border-2 border-meta-blue shadow-meta flex items-center justify-center gap-2">
+                <span>Hide & Pass to Next</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Moderator Abort Option -->
+      <div class="text-center pb-2">
+        <button onclick="abortToSetup()" class="text-xs font-bold text-meta-blue/60 hover:text-meta-blue underline underline-offset-4 py-2">
+          Cancel Round & Return to Setup
+        </button>
+      </div>
+    </main>
+
+    <!-- =====================================================================
+         SCREEN 3: 5-MINUTE DISCUSSION TIMER
+         ===================================================================== -->
+    <main id="screen-timer" class="hidden flex-1 flex flex-col justify-between gap-4">
+      
+      <!-- Active Category Reminder Banner (Helps Spy & Civilians stay on topic) -->
+      <section class="bg-white border-2 border-meta-blue rounded-2xl p-4 shadow-meta-sm text-center">
+        <span class="text-[11px] font-extrabold uppercase tracking-widest text-meta-blue/65 block mb-1">
+          Active Category
+        </span>
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-meta-blueLight border border-meta-blue/30">
+          <span id="timer-category-icon" class="text-lg">🌍</span>
+          <h2 id="timer-category-name" class="text-lg font-extrabold text-meta-blue">Places & Landmarks</h2>
+        </div>
+        <p class="text-xs font-medium text-meta-blue/75 mt-2">
+          Take turns asking clever questions! Keep answers subtle so the Spy can't guess the secret word.
+        </p>
+      </section>
+
+      <!-- Countdown Clock Card -->
+      <section id="timer-card" class="bg-white border-2 border-meta-blue rounded-3xl p-6 shadow-card flex flex-col items-center justify-center text-center">
+        <div class="flex items-center gap-2 mb-2">
+          <span id="timer-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="timer-status-label" class="text-xs font-extrabold uppercase tracking-wider text-meta-blue/75">
+            Discussion in Progress
+          </span>
+        </div>
+
+        <!-- Big Monospace Countdown -->
+        <div id="timer-display" class="font-mono text-6xl sm:text-7xl font-extrabold text-meta-blue tracking-tight my-2 select-none">
+          05:00
+        </div>
+
+        <!-- Timer Controls Row -->
+        <div class="flex items-center justify-center gap-2.5 mt-4 w-full">
+          <button onclick="adjustTimer(-30)" class="px-3.5 py-2.5 rounded-xl bg-meta-bg hover:bg-meta-blueLight border border-meta-blue/30 text-meta-blue font-bold text-xs transition active:scale-95">
+            -30s
+          </button>
+
+          <button id="btn-pause-resume" onclick="toggleTimerPause()" class="flex-1 max-w-[160px] py-2.5 px-4 rounded-xl bg-meta-blueTint hover:bg-meta-blueLight border-2 border-meta-blue text-meta-blue font-extrabold text-sm flex items-center justify-center gap-1.5 transition active:scale-95">
+            <span id="pause-icon">⏸</span>
+            <span id="pause-text">Pause</span>
+          </button>
+
+          <button onclick="adjustTimer(30)" class="px-3.5 py-2.5 rounded-xl bg-meta-bg hover:bg-meta-blueLight border border-meta-blue/30 text-meta-blue font-bold text-xs transition active:scale-95">
+            +30s
+          </button>
+        </div>
+      </section>
+
+      <!-- Players at this Table Reminder -->
+      <section class="bg-white border-2 border-meta-blue rounded-2xl p-4 shadow-meta-sm">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-meta-blue/75">
+            Players at <span id="timer-table-name">Table 1</span>
+          </h3>
+          <span class="text-[11px] font-bold text-meta-blue/65">1 Spy among you</span>
+        </div>
+        <div id="timer-players-chips" class="flex flex-wrap gap-1.5">
+          <!-- Populated via JS -->
+        </div>
+      </section>
+
+      <!-- End Discussion / Reveal Button -->
+      <div class="mt-auto pt-1 pb-4">
+        <button onclick="finishDiscussionAndReveal()" class="btn-meta w-full py-4 px-6 rounded-2xl bg-meta-blue hover:bg-meta-blueDark text-white font-extrabold text-base tracking-wide border-2 border-meta-blue shadow-meta flex items-center justify-center gap-2">
+          <span>Call Vote & Reveal Spy</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </button>
+      </div>
+    </main>
+
+    <!-- =====================================================================
+         SCREEN 4: ENDGAME REVEAL & NEXT ROUND
+         ===================================================================== -->
+    <main id="screen-results" class="hidden flex-1 flex flex-col justify-between gap-4">
+      
+      <div class="bg-white border-2 border-meta-blue rounded-3xl p-6 shadow-card text-center flex flex-col items-center">
+        <span class="inline-block px-3 py-1 rounded-full bg-meta-blueLight border border-meta-blue/30 text-xs font-extrabold uppercase tracking-wider text-meta-blue mb-4">
+          Round Over — The Truth
+        </span>
+
+        <!-- Spy Reveal Box -->
+        <div class="w-full p-4 rounded-2xl bg-meta-spyBg border-2 border-meta-spy mb-4">
+          <p class="text-xs font-extrabold uppercase tracking-widest text-meta-spy/80 mb-1">
+            The Spy Was
+          </p>
+          <h2 id="result-spy-name" class="text-3xl font-extrabold text-meta-spy break-words">
+            Player Name
+          </h2>
+        </div>
+
+        <!-- Secret Word Reveal Box -->
+        <div class="w-full p-4 rounded-2xl bg-meta-blueTint border-2 border-meta-blue mb-4">
+          <p class="text-xs font-extrabold uppercase tracking-widest text-meta-blue/70 mb-1">
+            Secret Word (<span id="result-category-name">Category</span>)
+          </p>
+          <h3 id="result-secret-word" class="text-2xl sm:text-3xl font-extrabold text-meta-blue break-words">
+            Secret Word
+          </h3>
+        </div>
+
+        <!-- Quick Post-Game Prompt for Table Discussion -->
+        <div class="w-full p-3.5 rounded-xl bg-meta-bg border border-meta-blue/20 text-left">
+          <p class="text-xs font-bold text-meta-blue mb-1">🎯 How scoring works:</p>
+          <ul class="text-xs text-meta-blue/80 space-y-1 font-medium">
+            <li>• <strong>Civilians win</strong> if the group votes out the Spy.</li>
+            <li>• <strong>Spy wins</strong> if someone else is voted out, OR if the caught Spy correctly guesses the Secret Word!</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Spy Fairness Leaderboard / Turn Distribution -->
+      <section class="bg-white border-2 border-meta-blue rounded-2xl p-4 shadow-meta-sm">
+        <div class="flex items-center justify-between mb-2.5">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-meta-blue/75">
+            Table Spy Rotation Tracker
+          </h3>
+          <span class="text-[11px] font-semibold text-meta-blue/65">Auto-balanced</span>
+        </div>
+        <div id="results-history-list" class="grid grid-cols-2 gap-2">
+          <!-- Populated via JS -->
+        </div>
+      </section>
+
+      <!-- Next Round Controls -->
+      <div class="mt-auto flex flex-col gap-2.5 pb-4">
+        <button onclick="playNextRoundSameTable()" class="btn-meta w-full py-4 px-6 rounded-2xl bg-meta-blue hover:bg-meta-blueDark text-white font-extrabold text-base tracking-wide border-2 border-meta-blue shadow-meta flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span>Play Next Round (Same Table)</span>
+        </button>
+
+        <button onclick="backToSetupFromResults()" class="w-full py-3 px-4 rounded-xl bg-white hover:bg-meta-blueTint border-2 border-meta-blue/30 text-meta-blue font-bold text-xs transition">
+          Change Players or Category
+        </button>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- =====================================================================
+       MODAL: HOW TO PLAY (ENGLISH CLUB GUIDE)
+       ===================================================================== -->
+  <div id="rules-modal" class="hidden fixed inset-0 z-50 bg-meta-blueDark/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-meta-blue rounded-3xl max-w-md w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b-2 border-meta-blue/15 bg-meta-bg">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🕵️‍♂️</span>
+          <h2 class="text-base font-extrabold text-meta-blue">How to Play Meta Talk Spy</h2>
+        </div>
+        <button onclick="toggleRulesModal(false)" class="w-8 h-8 rounded-full bg-white border border-meta-blue/30 text-meta-blue font-extrabold flex items-center justify-center hover:bg-meta-blueLight">
+          ✕
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm text-meta-blue/90 leading-relaxed">
+        <div class="p-3.5 rounded-2xl bg-meta-blueTint border border-meta-blue/20">
+          <h3 class="font-extrabold text-meta-blue mb-1">1. Pass the Phone</h3>
+          <p>The Table Moderator enters 4–6 player names and starts the round. Pass the phone around so each player privately views their role.</p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-meta-blueTint border border-meta-blue/20">
+          <h3 class="font-extrabold text-meta-blue mb-1">2. Civilians vs. The Spy</h3>
+          <p><strong>Civilians</strong> all see the exact same <strong>Category</strong> and <strong>Secret Word</strong> (e.g., <em>Places: Airport Terminal</em>).</p>
+          <p class="mt-1"><strong>1 Spy</strong> sees <strong>ONLY the Category</strong>—they do not know the Secret Word!</p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-meta-blueTint border border-meta-blue/20">
+          <h3 class="font-extrabold text-meta-blue mb-1">3. Ask Clever Questions (5 Mins)</h3>
+          <p>Players take turns asking each other one question about the secret word (e.g., <em>"Would you visit this place early in the morning?"</em>).</p>
+          <p class="mt-1">• <strong>Civilians:</strong> Prove you know the word without making it too obvious for the Spy.</p>
+          <p class="mt-1">• <strong>The Spy:</strong> Listen carefully, blend in, and deduce the secret word!</p>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-meta-blueTint border border-meta-blue/20">
+          <h3 class="font-extrabold text-meta-blue mb-1">4. Vote & Final Guess</h3>
+          <p>When the 5-minute timer ends (or earlier if ready), everyone counts <strong>3-2-1</strong> and points to who they think the Spy is. If the Spy is caught, they get <strong>one final chance</strong> to guess the Secret Word to steal the win!</p>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-meta-blue/15 bg-meta-bg">
+        <button onclick="toggleRulesModal(false)" class="btn-meta w-full py-3 rounded-xl bg-meta-blue text-white font-extrabold text-sm border-2 border-meta-blue shadow-meta-sm">
+          Got It, Let's Play!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================================================================
+       APPLICATION LOGIC (CURATED WORD BANK, FAIR SPY ENGINE, TIMER & AUDIO)
+       ===================================================================== -->
+  <script>
+    /**
+     * Curated Culturally Universal, Medium-Challenge Word Bank
+     * Designed for international university students (16+ words per category).
+     */
+    const WORD_BANK = {
+      places: {
+        id: 'places',
+        name: 'Places & Landmarks',
+        icon: '🏛️',
+        words: [
+          'Airport Terminal', 'Botanical Garden', 'Art Museum', 'Subway Station',
+          'Observatory', 'Lighthouse', 'Aqueduct', 'Flea Market',
+          'Rooftop Terrace', 'Ski Resort', 'Library Archive', 'Harbor Pier',
+          'National Park', 'University Auditorium', 'Train Dining Car', 'Planetarium',
+          'Greenhouse', 'Clock Tower'
+        ]
+      },
+      professions: {
+        id: 'professions',
+        name: 'Professions & Roles',
+        icon: '🧭',
+        words: [
+          'Architect', 'Air Traffic Controller', 'Archaeologist', 'Interpreter',
+          'Marine Biologist', 'Sommelier', 'Cartographer', 'Cinematographer',
+          'Paramedic', 'Watchmaker', 'Diplomat', 'Forensic Scientist',
+          'Urban Planner', 'Sound Engineer', 'Astronomer', 'Museum Curator',
+          'Stunt Double', 'Wildlife Photographer'
+        ]
+      },
+      objects: {
+        id: 'objects',
+        name: 'Everyday & Classic Objects',
+        icon: '⏳',
+        words: [
+          'Hourglass', 'Compass', 'Passport', 'Kaleidoscope',
+          'Metronome', 'Thermos', 'Magnifying Glass', 'Swiss Army Knife',
+          'Vinyl Record', 'Typewriter', 'Telescope', 'Stethoscope',
+          'Hammock', 'Sundial', 'Origami Crane', 'Pocket Watch',
+          'Binoculars', 'Fountain Pen'
+        ]
+      },
+      events: {
+        id: 'events',
+        name: 'Events & Occasions',
+        icon: '🎭',
+        words: [
+          'Masquerade Ball', 'Film Festival', 'Graduation Ceremony', 'Eclipse Viewing',
+          'Marathon Race', 'Charity Auction', 'Science Fair', 'Street Carnival',
+          'Diplomatic Summit', 'Book Launch', 'Cooking Competition', 'Lantern Festival',
+          'Botanical Exhibition', 'Chess Tournament', 'Music Recital', 'Debate Championship',
+          'Art Vernissage', 'New Year Fireworks'
+        ]
+      },
+      travel: {
+        id: 'travel',
+        name: 'Transportation & Travel',
+        icon: '🚠',
+        words: [
+          'Hot Air Balloon', 'Cable Car', 'Ferry Boat', 'Night Train',
+          'Cargo Ship', 'Submarine', 'Glider Plane', 'Monorail',
+          'Gondola', 'Expedition Rover', 'Bullet Train', 'Icebreaker Ship',
+          'Tandem Bicycle', 'Seaplane', 'Camper Van', 'Funicular Railway',
+          'Hovercraft', 'Cruise Liner'
+        ]
+      },
+      nature: {
+        id: 'nature',
+        name: 'Nature & Phenomena',
+        icon: 'aurora',
+        icon: '🌌',
+        words: [
+          'Coral Reef', 'Glacier', 'Northern Lights', 'Hot Spring',
+          'Volcano Crater', 'Sand Dune', 'Waterfall Canyon', 'Monsoon Rain',
+          'Bamboo Forest', 'Solar Eclipse', 'Tidal Pool', 'Stalactite Cave',
+          'Archipelago', 'Cloud Forest', 'Meteor Shower', 'Geyser',
+          'Bioluminescent Bay', 'Fjord'
+        ]
+      },
+      culture: {
+        id: 'culture',
+        name: 'Arts, Media & Culture',
+        icon: '🎨',
+        words: [
+          'Documentary Film', 'Symphony Orchestra', 'Street Mural', 'Puppet Theater',
+          'Photography Darkroom', 'Pottery Studio', 'Calligraphy', 'Improv Comedy',
+          'Sculpture Garden', 'Radio Broadcast', 'Jazz Club', 'Origami Workshop',
+          'Ballet Rehearsal', 'True Crime Podcast', 'Shadow Puppetry', 'Film Soundtrack',
+          'Stand-Up Comedy', 'Acrobatic Circus'
+        ]
+      }
+    };
+
+    // Persistent LocalStorage Key
+    const STORAGE_KEY = 'metatalk_spy_table_state_v1';
+
+    // Application State
+    let state = {
+      tableName: 'Table 1',
+      players: [
+        { id: 'p1', name: 'Player 1', spyCount: 0 },
+        { id: 'p2', name: 'Player 2', spyCount: 0 },
+        { id: 'p3', name: 'Player 3', spyCount: 0 },
+        { id: 'p4', name: 'Player 4', spyCount: 0 }
+      ],
+      selectedCategory: 'random', // 'random' or one of WORD_BANK keys
+      roundNumber: 1,
+      lastSpyId: null,
+      usedWords: [], // Avoid repeating words in same session
+      // Active round runtime state
+      currentRound: {
+        category: null,
+        secretWord: '',
+        spyPlayerId: null,
+        revealIndex: 0,
+        isCardFlipped: false
+      },
+      // Timer runtime state
+      timer: {
+        totalSeconds: 300, // 5 minutes
+        remainingSeconds: 300,
+        isRunning: false,
+        intervalId: null,
+        hasPlayedEndChime: false
+      }
+    };
+
+    // =========================================================================
+    // INITIALIZATION & LOCAL STORAGE
+    // =========================================================================
+    window.onload = function () {
+      loadStateFromStorage();
+      renderSetupScreen();
+    };
+
+    function loadStateFromStorage() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.tableName) state.tableName = parsed.tableName;
+          if (Array.isArray(parsed.players) && parsed.players.length >= 4 && parsed.players.length <= 6) {
+            state.players = parsed.players;
+          }
+          if (parsed.selectedCategory) state.selectedCategory = parsed.selectedCategory;
+          if (typeof parsed.roundNumber === 'number') state.roundNumber = parsed.roundNumber;
+          if (parsed.lastSpyId) state.lastSpyId = parsed.lastSpyId;
+          if (Array.isArray(parsed.usedWords)) state.usedWords = parsed.usedWords;
+        }
+      } catch (e) {
+        console.warn('Could not load saved table state:', e);
+      }
+    }
+
+    function saveStateToStorage() {
+      try {
+        const payload = {
+          tableName: state.tableName,
+          players: state.players,
+          selectedCategory: state.selectedCategory,
+          roundNumber: state.roundNumber,
+          lastSpyId: state.lastSpyId,
+          usedWords: state.usedWords
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (e) {
+        console.warn('Could not save table state:', e);
+      }
+    }
+
+    // =========================================================================
+    // INLINE TOAST NOTIFICATIONS (No alert/confirm)
+    // =========================================================================
+    let toastTimeout = null;
+    function showToast(message, icon = 'ℹ️') {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toast-message').textContent = message;
+      document.getElementById('toast-icon').textContent = icon;
+      banner.classList.remove('hidden');
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        hideToast();
+      }, 3600);
+    }
+
+    function hideToast() {
+      document.getElementById('toast-banner').classList.add('hidden');
+    }
+
+    // =========================================================================
+    // SCREEN NAVIGATION HELPER
+    // =========================================================================
+    function showScreen(screenId) {
+      ['screen-setup', 'screen-reveal', 'screen-timer', 'screen-results'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(screenId).classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function toggleRulesModal(show) {
+      const modal = document.getElementById('rules-modal');
+      if (show) {
+        modal.classList.remove('hidden');
+      } else {
+        modal.classList.add('hidden');
+      }
+    }
+
+    // =========================================================================
+    // SCREEN 1: SETUP RENDERING & ROSTER MANAGEMENT
+    // =========================================================================
+    function renderSetupScreen() {
+      // Table name & Round badge
+      const tableInput = document.getElementById('table-name-input');
+      tableInput.value = state.tableName;
+      tableInput.oninput = (e) => {
+        state.tableName = e.target.value.trim() || 'Table 1';
+        document.getElementById('header-subtitle').textContent = `${state.tableName} • Pass & Play`;
+        saveStateToStorage();
+      };
+
+      document.getElementById('header-subtitle').textContent = `${state.tableName} • Pass & Play`;
+      document.getElementById('round-counter-badge').textContent = state.roundNumber;
+
+      // Render player rows
+      renderPlayersList();
+
+      // Render category buttons
+      renderCategoryGrid();
+    }
+
+    function renderPlayersList() {
+      const container = document.getElementById('players-list');
+      container.innerHTML = '';
+
+      state.players.forEach((player, index) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2';
+
+        const spyBadge = player.spyCount > 0
+          ? `<span class="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-meta-blueLight text-meta-blue whitespace-nowrap" title="Times as Spy">Spy ×${player.spyCount}</span>`
+          : '';
+
+        const removeBtn = state.players.length > 4
+          ? `<button type="button" onclick="removePlayer('${player.id}')" aria-label="Remove player" class="w-10 h-10 flex-shrink-0 rounded-xl bg-meta-bg hover:bg-red-50 border border-meta-blue/25 hover:border-red-300 text-meta-blue/70 hover:text-red-700 font-bold flex items-center justify-center transition active:scale-95">✕</button>`
+          : `<div class="w-10 h-10 flex-shrink-0 rounded-xl bg-meta-blueTint border border-meta-blue/15 text-meta-blue font-extrabold text-xs flex items-center justify-center">${index + 1}</div>`;
+
+        row.innerHTML = `
+          ${removeBtn}
+          <div class="relative flex-1 flex items-center">
+            <input type="text" maxlength="20" value="${escapeHtml(player.name)}" placeholder="Player ${index + 1}"
+                   onchange="updatePlayerName('${player.id}', this.value)"
+                   oninput="updatePlayerName('${player.id}', this.value)"
+                   class="w-full pl-3.5 pr-16 py-2.5 rounded-xl bg-meta-bg border-2 border-meta-blue/25 focus:border-meta-blue focus:bg-white outline-none font-bold text-sm text-meta-blue transition" />
+            <div class="absolute right-2.5 pointer-events-none">
+              ${spyBadge}
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      // Update count pill & add button state
+      document.getElementById('player-count-pill').textContent = `${state.players.length} / 6`;
+      const addBtn = document.getElementById('btn-add-player');
+      addBtn.disabled = state.players.length >= 6;
+    }
+
+    function updatePlayerName(id, newName) {
+      const player = state.players.find(p => p.id === id);
+      if (player) {
+        player.name = newName;
+        saveStateToStorage();
+      }
+    }
+
+    function addPlayer() {
+      if (state.players.length >= 6) {
+        showToast('Maximum 6 players per table group.', '⚠️');
+        return;
+      }
+      const nextNum = state.players.length + 1;
+      state.players.push({
+        id: 'p_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        name: `Player ${nextNum}`,
+        spyCount: 0
+      });
+      saveStateToStorage();
+      renderPlayersList();
+    }
+
+    function removePlayer(id) {
+      if (state.players.length <= 4) {
+        showToast('Minimum 4 players required to play.', '⚠️');
+        return;
+      }
+      state.players = state.players.filter(p => p.id !== id);
+      if (state.lastSpyId === id) {
+        state.lastSpyId = null;
+      }
+      saveStateToStorage();
+      renderPlayersList();
+    }
+
+    function confirmResetHistory() {
+      document.getElementById('reset-confirm-bar').classList.remove('hidden');
+    }
+
+    function cancelResetHistory() {
+      document.getElementById('reset-confirm-bar').classList.add('hidden');
+    }
+
+    function executeResetHistory() {
+      state.players.forEach(p => p.spyCount = 0);
+      state.lastSpyId = null;
+      state.roundNumber = 1;
+      state.usedWords = [];
+      saveStateToStorage();
+      document.getElementById('reset-confirm-bar').classList.add('hidden');
+      document.getElementById('round-counter-badge').textContent = '1';
+      renderPlayersList();
+      showToast('Spy rotation history & round counter reset!', '✨');
+    }
+
+    function renderCategoryGrid() {
+      const grid = document.getElementById('category-grid');
+      grid.innerHTML = '';
+
+      // Random Category Option (Full Width Top Card)
+      const isRandomSelected = state.selectedCategory === 'random';
+      const randomBtn = document.createElement('button');
+      randomBtn.type = 'button';
+      randomBtn.onclick = () => selectCategory('random');
+      randomBtn.className = `col-span-2 p-3 rounded-xl border-2 text-left flex items-center justify-between transition active:scale-99 ${
+        isRandomSelected
+          ? 'bg-meta-blue text-white border-meta-blue shadow-meta-sm'
+          : 'bg-meta-blueTint hover:bg-meta-blueLight text-meta-blue border-meta-blue/30'
+      }`;
+      randomBtn.innerHTML = `
+        <div class="flex items-center gap-2.5">
+          <span class="text-lg">🎲</span>
+          <div>
+            <div class="font-extrabold text-xs sm:text-sm">Random Category</div>
+            <div class="text-[11px] ${isRandomSelected ? 'text-white/80' : 'text-meta-blue/70'} font-medium">Surprise topic each round</div>
+          </div>
+        </div>
+        <span class="text-xs font-extrabold px-2 py-0.5 rounded-md ${isRandomSelected ? 'bg-white text-meta-blue' : 'bg-meta-blue/10 text-meta-blue'}">
+          ${isRandomSelected ? 'SELECTED' : 'AUTO'}
+        </span>
+      `;
+      grid.appendChild(randomBtn);
+
+      // Individual Categories
+      Object.values(WORD_BANK).forEach(cat => {
+        const selected = state.selectedCategory === cat.id;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.onclick = () => selectCategory(cat.id);
+        btn.className = `p-3 rounded-xl border-2 text-left flex flex-col justify-between gap-1.5 transition active:scale-98 ${
+          selected
+            ? 'bg-meta-blue text-white border-meta-blue shadow-meta-sm'
+            : 'bg-white hover:bg-meta-blueTint text-meta-blue border-meta-blue/25'
+        }`;
+        btn.innerHTML = `
+          <div class="flex items-center justify-between w-full">
+            <span class="text-lg">${cat.icon}</span>
+            ${selected ? '<span class="w-2 h-2 rounded-full bg-white"></span>' : ''}
+          </div>
+          <span class="font-bold text-xs leading-snug">${cat.name}</span>
+        `;
+        grid.appendChild(btn);
+      });
+    }
+
+    function selectCategory(catId) {
+      state.selectedCategory = catId;
+      saveStateToStorage();
+      renderCategoryGrid();
+    }
+
+    // =========================================================================
+    // FAIR ANTI-REPEAT SPY SELECTION ALGORITHM
+    // =========================================================================
+    function pickFairSpy(players, lastSpyId) {
+      // 1. Exclude the person who was Spy in the immediately preceding round (if >= 2 players)
+      let eligible = players.filter(p => p.id !== lastSpyId);
+      if (eligible.length === 0) {
+        eligible = [...players];
+      }
+
+      // 2. Find the minimum spyCount among eligible players
+      const minSpyCount = Math.min(...eligible.map(p => p.spyCount));
+
+      // 3. Filter to players tied for the lowest spyCount
+      const lowestTier = eligible.filter(p => p.spyCount === minSpyCount);
+
+      // 4. Pick uniformly at random from the lowest tier
+      const chosen = lowestTier[Math.floor(Math.random() * lowestTier.length)];
+      return chosen;
+    }
+
+    function pickCategoryAndWord(selectedCategoryKey) {
+      let categoryObj;
+      if (selectedCategoryKey === 'random' || !WORD_BANK[selectedCategoryKey]) {
+        const keys = Object.keys(WORD_BANK);
+        const randomKey = keys[Math.floor(Math.random() * keys.length)];
+        categoryObj = WORD_BANK[randomKey];
+      } else {
+        categoryObj = WORD_BANK[selectedCategoryKey];
+      }
+
+      // Filter out recently used words if possible
+      let availableWords = categoryObj.words.filter(w => !state.usedWords.includes(w));
+      if (availableWords.length === 0) {
+        // Reset used words for this category if exhausted
+        state.usedWords = state.usedWords.filter(w => !categoryObj.words.includes(w));
+        availableWords = [...categoryObj.words];
+      }
+
+      const secretWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+      state.usedWords.push(secretWord);
+
+      return { categoryObj, secretWord };
+    }
+
+    // =========================================================================
+    // START ROUND & ROLE REVEAL FLOW
+    // =========================================================================
+    function startRound() {
+      // Sanitize empty names cleanly
+      state.players.forEach((p, idx) => {
+        if (!p.name || !p.name.trim()) {
+          p.name = `Player ${idx + 1}`;
+        } else {
+          p.name = p.name.trim();
+        }
+      });
+
+      // Check duplicate names warning (non-blocking or auto-numbered if identical)
+      const seenNames = new Set();
+      state.players.forEach((p, idx) => {
+        if (seenNames.has(p.name.toLowerCase())) {
+          p.name = `${p.name} (${idx + 1})`;
+        }
+        seenNames.add(p.name.toLowerCase());
+      });
+
+      // Pick Spy fairly
+      const spyPlayer = pickFairSpy(state.players, state.lastSpyId);
+      spyPlayer.spyCount += 1;
+      state.lastSpyId = spyPlayer.id;
+
+      // Pick Category & Secret Word
+      const { categoryObj, secretWord } = pickCategoryAndWord(state.selectedCategory);
+
+      // Setup active round state
+      state.currentRound = {
+        category: categoryObj,
+        secretWord: secretWord,
+        spyPlayerId: spyPlayer.id,
+        revealIndex: 0,
+        isCardFlipped: false
+      };
+
+      saveStateToStorage();
+      hideToast();
+      prepareRevealCardForCurrentPlayer();
+      showScreen('screen-reveal');
+    }
+
+    function prepareRevealCardForCurrentPlayer() {
+      const idx = state.currentRound.revealIndex;
+      const total = state.players.length;
+      const player = state.players[idx];
+      const isLastPlayer = idx === total - 1;
+
+      // Reset card flip immediately without transition flash
+      const cardInner = document.getElementById('role-card-inner');
+      cardInner.style.transition = 'none';
+      cardInner.classList.remove('rotate-y-180');
+      state.currentRound.isCardFlipped = false;
+
+      // Force reflow then re-enable smooth 3D flip
+      void cardInner.offsetWidth;
+      cardInner.style.transition = '';
+
+      // Update Header Progress
+      document.getElementById('reveal-table-badge').textContent = `${state.tableName} • ROUND ${state.roundNumber}`;
+      document.getElementById('reveal-progress-text').textContent = `Player ${idx + 1} of ${total}`;
+      document.getElementById('reveal-progress-bar').style.width = `${((idx + 1) / total) * 100}%`;
+
+      // Update Front of Card
+      document.getElementById('reveal-player-name').textContent = player.name;
+
+      // Pre-populate Back of Card (Hidden until flipped)
+      const isSpy = player.id === state.currentRound.spyPlayerId;
+      const cat = state.currentRound.category;
+      const badgeContainer = document.getElementById('role-badge-container');
+      const contentContainer = document.getElementById('role-content-container');
+      const cardBack = document.getElementById('card-back');
+
+      if (isSpy) {
+        cardBack.className = 'backface-hidden rotate-y-180 absolute inset-0 w-full min-h-[360px] bg-meta-spyBg border-2 border-meta-spy rounded-3xl p-6 shadow-card flex flex-col items-center justify-between text-center';
+        badgeContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-meta-spy text-white text-xs font-extrabold uppercase tracking-wider">
+            🕵️‍♂️ Secret Role
+          </span>
+        `;
+        contentContainer.innerHTML = `
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-meta-spy tracking-tight mb-3">
+            YOU ARE THE SPY
+          </h2>
+          <div class="w-full p-3.5 rounded-2xl bg-white border-2 border-meta-spy/30 mb-3">
+            <span class="block text-[11px] font-extrabold uppercase tracking-wider text-meta-spy/70 mb-0.5">
+              Category Hint
+            </span>
+            <span class="text-lg font-extrabold text-meta-blue">
+              ${cat.icon} ${cat.name}
+            </span>
+          </div>
+          <p class="text-xs font-semibold text-meta-spy/90 max-w-[260px] leading-relaxed">
+            You don't know the secret word! Listen closely to others' questions, blend in, and figure out what the word is.
+          </p>
+        `;
+      } else {
+        cardBack.className = 'backface-hidden rotate-y-180 absolute inset-0 w-full min-h-[360px] bg-white border-2 border-meta-blue rounded-3xl p-6 shadow-card flex flex-col items-center justify-between text-center';
+        badgeContainer.innerHTML = `
+          <span class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-meta-blueLight border border-meta-blue/30 text-meta-blue text-xs font-extrabold uppercase tracking-wider">
+            💬 Civilian Team
+          </span>
+        `;
+        contentContainer.innerHTML = `
+          <span class="text-xs font-bold uppercase tracking-wider text-meta-blue/65 mb-1">
+            Category: ${cat.name}
+          </span>
+          <div class="w-full p-4 rounded-2xl bg-meta-blueTint border-2 border-meta-blue mb-3">
+            <span class="block text-[11px] font-extrabold uppercase tracking-widest text-meta-blue/70 mb-1">
+              Secret Word
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-meta-blue break-words">
+              ${escapeHtml(state.currentRound.secretWord)}
+            </h2>
+          </div>
+          <p class="text-xs font-semibold text-meta-blue/80 max-w-[260px] leading-relaxed">
+            Ask clever questions to spot who doesn't know this word—without making it obvious to the Spy!
+          </p>
+        `;
+      }
+
+      // Update Next Button Text
+      const nextBtn = document.getElementById('btn-next-player');
+      if (isLastPlayer) {
+        nextBtn.innerHTML = `
+          <span>Hide & Start 5:00 Timer</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        `;
+      } else {
+        const nextPlayerName = state.players[idx + 1].name;
+        nextBtn.innerHTML = `
+          <span>Hide & Pass to ${escapeHtml(nextPlayerName)}</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+          </svg>
+        `;
+      }
+    }
+
+    function revealCurrentRole() {
+      if (state.currentRound.isCardFlipped) return;
+      state.currentRound.isCardFlipped = true;
+      document.getElementById('role-card-inner').classList.add('rotate-y-180');
+    }
+
+    function hideAndAdvance() {
+      if (!state.currentRound.isCardFlipped) return;
+
+      const nextIndex = state.currentRound.revealIndex + 1;
+      if (nextIndex < state.players.length) {
+        state.currentRound.revealIndex = nextIndex;
+        prepareRevealCardForCurrentPlayer();
+      } else {
+        // All players have seen their roles -> Launch 5-Minute Discussion Timer
+        startDiscussionTimerScreen();
+      }
+    }
+
+    function abortToSetup() {
+      // Roll back the spyCount increment for the aborted round
+      const spy = state.players.find(p => p.id === state.currentRound.spyPlayerId);
+      if (spy && spy.spyCount > 0) {
+        spy.spyCount -= 1;
+      }
+      saveStateToStorage();
+      renderSetupScreen();
+      showScreen('screen-setup');
+    }
+
+    // =========================================================================
+    // SCREEN 3: 5-MINUTE DISCUSSION COUNTDOWN TIMER
+    // =========================================================================
+    function startDiscussionTimerScreen() {
+      const cat = state.currentRound.category;
+      document.getElementById('timer-category-icon').textContent = cat.icon;
+      document.getElementById('timer-category-name').textContent = cat.name;
+      document.getElementById('timer-table-name').textContent = state.tableName;
+
+      // Render player chips
+      const chipsContainer = document.getElementById('timer-players-chips');
+      chipsContainer.innerHTML = state.players.map(p => `
+        <span class="px-3 py-1 rounded-xl bg-meta-blueTint border border-meta-blue/25 text-xs font-bold text-meta-blue">
+          ${escapeHtml(p.name)}
+        </span>
+      `).join('');
+
+      // Reset timer to 5:00 (300 seconds)
+      stopTimerInterval();
+      state.timer.totalSeconds = 300;
+      state.timer.remainingSeconds = 300;
+      state.timer.isRunning = true;
+      state.timer.hasPlayedEndChime = false;
+
+      updateTimerUI();
+      showScreen('screen-timer');
+
+      state.timer.intervalId = setInterval(() => {
+        if (!state.timer.isRunning) return;
+
+        if (state.timer.remainingSeconds > 0) {
+          state.timer.remainingSeconds -= 1;
+          updateTimerUI();
+
+          if (state.timer.remainingSeconds === 0 && !state.timer.hasPlayedEndChime) {
+            state.timer.hasPlayedEndChime = true;
+            state.timer.isRunning = false;
+            playGentleEndChime();
+            updateTimerUI();
+            showToast("Time's up! Cast your votes now!", "⏰");
+          }
+        }
+      }, 1000);
+    }
+
+    function stopTimerInterval() {
+      if (state.timer.intervalId) {
+        clearInterval(state.timer.intervalId);
+        state.timer.intervalId = null;
+      }
+    }
+
+    function toggleTimerPause() {
+      if (state.timer.remainingSeconds === 0) return;
+      state.timer.isRunning = !state.timer.isRunning;
+      updateTimerUI();
+    }
+
+    function adjustTimer(deltaSeconds) {
+      state.timer.remainingSeconds = Math.max(0, Math.min(900, state.timer.remainingSeconds + deltaSeconds));
+      if (state.timer.remainingSeconds > 0) {
+        state.timer.hasPlayedEndChime = false;
+      }
+      updateTimerUI();
+    }
+
+    function updateTimerUI() {
+      const secs = state.timer.remainingSeconds;
+      const mins = Math.floor(secs / 60);
+      const remSecs = secs % 60;
+      const formatted = `${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
+
+      const displayEl = document.getElementById('timer-display');
+      const cardEl = document.getElementById('timer-card');
+      const dotEl = document.getElementById('timer-status-dot');
+      const labelEl = document.getElementById('timer-status-label');
+      const pauseIcon = document.getElementById('pause-icon');
+      const pauseText = document.getElementById('pause-text');
+
+      displayEl.textContent = formatted;
+
+      // Pause/Resume button state
+      if (state.timer.isRunning) {
+        pauseIcon.textContent = '⏸';
+        pauseText.textContent = 'Pause';
+      } else {
+        pauseIcon.textContent = '▶️';
+        pauseText.textContent = secs === 0 ? 'Finished' : 'Resume';
+      }
+
+      // Visual Styling based on remaining time
+      if (secs === 0) {
+        displayEl.className = 'font-mono text-6xl sm:text-7xl font-extrabold text-meta-spy tracking-tight my-2 select-none';
+        cardEl.className = 'bg-meta-spyBg border-2 border-meta-spy rounded-3xl p-6 shadow-card flex flex-col items-center justify-center text-center urgent-pulse';
+        dotEl.className = 'w-2.5 h-2.5 rounded-full bg-meta-spy';
+        labelEl.textContent = "Time's Up! Vote Now";
+        labelEl.className = 'text-xs font-extrabold uppercase tracking-wider text-meta-spy';
+      } else if (secs <= 30) {
+        displayEl.className = 'font-mono text-6xl sm:text-7xl font-extrabold text-meta-spy tracking-tight my-2 select-none';
+        cardEl.className = 'bg-white border-2 border-meta-spy rounded-3xl p-6 shadow-card flex flex-col items-center justify-center text-center urgent-pulse';
+        dotEl.className = 'w-2.5 h-2.5 rounded-full bg-meta-spy animate-ping';
+        labelEl.textContent = state.timer.isRunning ? 'Final 30 Seconds!' : 'Timer Paused';
+        labelEl.className = 'text-xs font-extrabold uppercase tracking-wider text-meta-spy';
+      } else {
+        displayEl.className = 'font-mono text-6xl sm:text-7xl font-extrabold text-meta-blue tracking-tight my-2 select-none';
+        cardEl.className = 'bg-white border-2 border-meta-blue rounded-3xl p-6 shadow-card flex flex-col items-center justify-center text-center';
+        dotEl.className = state.timer.isRunning
+          ? 'w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse'
+          : 'w-2.5 h-2.5 rounded-full bg-amber-500';
+        labelEl.textContent = state.timer.isRunning ? 'Discussion in Progress' : 'Timer Paused';
+        labelEl.className = 'text-xs font-extrabold uppercase tracking-wider text-meta-blue/75';
+      }
+    }
+
+    // Gentle Web Audio API Chime when 5-minute timer hits 00:00
+    function playGentleEndChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const notes = [523.25, 659.25, 783.99]; // C5, E5, G5 pleasant triad
+        notes.forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.18);
+
+          gain.gain.setValueAtTime(0.001, ctx.currentTime + i * 0.18);
+          gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + i * 0.18 + 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.65);
+
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + i * 0.18);
+          osc.stop(ctx.currentTime + i * 0.18 + 0.7);
+        });
+      } catch (e) {
+        // Ignore audio restrictions if device is muted
+      }
+    }
+
+    // =========================================================================
+    // SCREEN 4: ENDGAME RESULTS & PLAY NEXT ROUND
+    // =========================================================================
+    function finishDiscussionAndReveal() {
+      stopTimerInterval();
+      hideToast();
+
+      const spy = state.players.find(p => p.id === state.currentRound.spyPlayerId);
+      const cat = state.currentRound.category;
+
+      document.getElementById('result-spy-name').textContent = spy ? spy.name : 'Unknown';
+      document.getElementById('result-category-name').textContent = cat.name;
+      document.getElementById('result-secret-word').textContent = state.currentRound.secretWord;
+
+      // Render Spy Rotation Tracker
+      const historyList = document.getElementById('results-history-list');
+      historyList.innerHTML = state.players.map(p => {
+        const isCurrentSpy = p.id === state.currentRound.spyPlayerId;
+        return `
+          <div class="flex items-center justify-between px-3 py-2 rounded-xl border ${
+            isCurrentSpy ? 'bg-meta-spyBg border-meta-spy/40' : 'bg-meta-bg border-meta-blue/15'
+          }">
+            <span class="text-xs font-bold ${isCurrentSpy ? 'text-meta-spy' : 'text-meta-blue'} truncate pr-1">
+              ${escapeHtml(p.name)}
+            </span>
+            <span class="text-[11px] font-extrabold px-2 py-0.5 rounded-md ${
+              isCurrentSpy ? 'bg-meta-spy text-white' : 'bg-meta-blueLight text-meta-blue'
+            }">
+              ${p.spyCount}×
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      showScreen('screen-results');
+    }
+
+    function playNextRoundSameTable() {
+      state.roundNumber += 1;
+      saveStateToStorage();
+      startRound();
+    }
+
+    function backToSetupFromResults() {
+      state.roundNumber += 1;
+      saveStateToStorage();
+      renderSetupScreen();
+      showScreen('screen-setup');
+    }
+
+    // =========================================================================
+    // UTILITY: HTML ESCAPING
+    // =========================================================================
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
